@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MongoDB Connection Test - LeadFlow CRM</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+        h2 {
+            color: #555;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+        }
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: transform 0.2s;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+        button:hover {
+            transform: translateY(-2px);
+        }
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            white-space: pre-wrap;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .info {
+            background: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+        }
+        input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            margin-bottom: 15px;
+        }
+        input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <h1>🔌 MongoDB Connection Test</h1>
+            <p class="subtitle">LeadFlow CRM Database Setup</p>
+            
+            <button onclick="testConnection()" id="testBtn">
+                Test Database Connection
+            </button>
+            
+            <div id="connectionResult"></div>
+        </div>
+
+        <div class="card">
+            <h2>👥 User Management</h2>
+            
+            <button onclick="listUsers()" id="listBtn">
+                List All Users
+            </button>
+            
+            <div id="usersResult"></div>
+        </div>
+
+        <div class="card">
+            <h2>👑 Promote User to Admin</h2>
+            <p class="subtitle">Enter the email address of the user you want to promote</p>
+            
+            <input 
+                type="email" 
+                id="emailInput" 
+                placeholder="user@example.com"
+                onkeypress="if(event.key==='Enter') promoteUser()"
+            >
+            
+            <button onclick="promoteUser()" id="promoteBtn">
+                Promote to Admin
+            </button>
+            
+            <div id="promoteResult"></div>
+        </div>
+    </div>
+
+    <script>
+        async function testConnection() {
+            const btn = document.getElementById('testBtn');
+            const resultDiv = document.getElementById('connectionResult');
+            
+            btn.disabled = true;
+            btn.innerHTML = '<span class="loading"></span> Testing...';
+            resultDiv.innerHTML = '';
+            
+            try {
+                const response = await fetch('/api/test-db');
+                const data = await response.json();
+                
+                if (data.success) {
+                    resultDiv.className = 'result success';
+                    resultDiv.textContent = '✅ Connection Successful!\n\n' + 
+                        JSON.stringify(data, null, 2);
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.textContent = '❌ Connection Failed\n\n' + 
+                        JSON.stringify(data, null, 2);
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = '❌ Error: ' + error.message;
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Test Database Connection';
+            }
+        }
+
+        async function listUsers() {
+            const btn = document.getElementById('listBtn');
+            const resultDiv = document.getElementById('usersResult');
+            
+            btn.disabled = true;
+            btn.innerHTML = '<span class="loading"></span> Loading...';
+            resultDiv.innerHTML = '';
+            
+            try {
+                const response = await fetch('/api/promote-admin');
+                const data = await response.json();
+                
+                if (data.success) {
+                    resultDiv.className = 'result info';
+                    resultDiv.textContent = `📋 Found ${data.count} user(s)\n\n` + 
+                        JSON.stringify(data.users, null, 2);
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.textContent = '❌ Error\n\n' + 
+                        JSON.stringify(data, null, 2);
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = '❌ Error: ' + error.message;
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'List All Users';
+            }
+        }
+
+        async function promoteUser() {
+            const btn = document.getElementById('promoteBtn');
+            const resultDiv = document.getElementById('promoteResult');
+            const emailInput = document.getElementById('emailInput');
+            const email = emailInput.value.trim();
+            
+            if (!email) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = '❌ Please enter an email address';
+                return;
+            }
+            
+            btn.disabled = true;
+            btn.innerHTML = '<span class="loading"></span> Promoting...';
+            resultDiv.innerHTML = '';
+            
+            try {
+                const response = await fetch('/api/promote-admin', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ email }),
+                });
+                
+                const data = await response.json();
+                
+                if (data.success || response.ok) {
+                    resultDiv.className = 'result success';
+                    resultDiv.textContent = '✅ Success!\n\n' + 
+                        JSON.stringify(data, null, 2);
+                    emailInput.value = '';
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.textContent = '❌ Failed\n\n' + 
+                        JSON.stringify(data, null, 2);
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = '❌ Error: ' + error.message;
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Promote to Admin';
+            }
+        }
+    </script>
+</body>
+</html>
